@@ -3,169 +3,516 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>مختبر محمود عادل - الإصدار النهائي</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <style>
-        body { margin: 0; background: #000; color: white; font-family: 'Times New Roman', serif; overflow: hidden; }
-        #ui-layer {
-            position: absolute; bottom: 0; width: 100%;
-            background: rgba(15, 15, 15, 0.95);
-            padding: 15px; border-top: 2px solid #00d4ff;
-            border-radius: 25px 25px 0 0; z-index: 100; text-align: center;
-            box-sizing: border-box;
+    <title>مختبر محمود عادل - رباعي الأوجه التفاعلي | صيغ رياضية دقيقة</title>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
         }
-        .math-header { font-size: 1.4rem; color: #ffcc00; margin-bottom: 5px; direction: ltr; font-weight: bold; }
-        .substitution { font-size: 1.1rem; color: #00d4ff; margin: 5px 0; direction: ltr; font-family: 'Courier New', monospace; }
-        .controls-row { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 10px; flex-wrap: wrap; }
-        .btn-circle { width: 45px; height: 45px; border-radius: 50%; border: none; background: #00d4ff; color: #000; font-size: 22px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; }
-        .btn-action { padding: 10px 20px; border-radius: 20px; border: 1.5px solid #ff9f43; background: transparent; color: #ff9f43; cursor: pointer; font-family: 'Segoe UI'; font-weight: bold; font-size: 0.9rem; }
-        .btn-play-pause { background: #ff9f43; color: #000; border: none; }
-        #n-val { font-family: sans-serif; font-size: 1.5rem; color: #ffcc00; font-weight: bold; }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background: #010101;
+            overflow: hidden;
+            font-family: 'Segoe UI', 'Noto Sans Arabic', 'Tahoma', system-ui, sans-serif;
+        }
+        canvas, .css2d-renderer {
+            display: block;
+        }
+        /* نافذة المعلومات المنبثقة */
+        .info-popup {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 200;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            opacity: 0;
+        }
+        .info-card {
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            padding: 12px 28px;
+            border-radius: 60px;
+            border-left: 5px solid;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            font-family: 'Segoe UI', 'STIX', 'Times New Roman', 'Cambria Math', monospace;
+            font-size: 1rem;
+            direction: ltr;
+            color: #fff;
+        }
+        .info-card span {
+            font-weight: bold;
+        }
+        /* حاوية القوانين الرياضية (أسفل) */
+        .law-container {
+            position: absolute;
+            bottom: 80px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 90;
+            pointer-events: none;
+            direction: ltr;
+        }
+        .formula-card {
+            display: inline-block;
+            background: rgba(8, 18, 28, 0.85);
+            backdrop-filter: blur(14px);
+            border-radius: 48px;
+            padding: 10px 32px;
+            border: 1px solid rgba(0, 212, 255, 0.5);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            font-family: 'STIX', 'Times New Roman', 'Cambria Math', 'Courier New', monospace;
+        }
+        .math-header {
+            font-size: 1.35rem;
+            font-weight: 500;
+            color: #ffdd88;
+            margin-bottom: 6px;
+            text-align: center;
+            direction: ltr;
+            letter-spacing: 0.5px;
+        }
+        .substitution {
+            font-size: 1.1rem;
+            font-family: 'STIX', 'Times New Roman', 'Cambria Math', monospace;
+            color: #aaffff;
+            background: rgba(0, 40, 55, 0.6);
+            padding: 6px 20px;
+            border-radius: 40px;
+            display: inline-block;
+            border: 1px solid #2cbbdd;
+        }
+        /* شريط الأزرار السفلي */
+        .action-bar {
+            position: absolute;
+            bottom: 18px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: nowrap;
+            padding: 8px 20px;
+            background: rgba(5, 12, 20, 0.85);
+            backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(0, 212, 255, 0.4);
+            border-radius: 50px;
+            width: fit-content;
+            margin: 0 auto;
+            z-index: 100;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+        }
+        .btn-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #1f2e3f, #0f1822);
+            border: none;
+            color: #0ff;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.08s linear;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-circle:active { transform: scale(0.94); }
+        .btn-icon { width: 44px; height: 44px; font-size: 24px; }
+        #n-info {
+            font-size: 1.2rem;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 16px;
+            border-radius: 40px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: baseline;
+            gap: 6px;
+            color: #eee;
+            font-family: monospace;
+        }
+        #n-val {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #ffdd99;
+            background: #000000aa;
+            padding: 0 10px;
+            border-radius: 40px;
+        }
+        @media (max-width: 650px) {
+            .math-header { font-size: 1rem; }
+            .substitution { font-size: 0.8rem; }
+            .btn-circle { width: 38px; height: 38px; font-size: 20px; }
+            #n-info { font-size: 1rem; }
+            #n-val { font-size: 1.3rem; }
+            .info-card { font-size: 0.8rem; padding: 8px 18px; }
+        }
+        /* تنسيق خاص للصيغ الرياضية */
+        .math {
+            font-family: 'STIX', 'Times New Roman', 'Cambria Math', 'Courier New', monospace;
+            font-style: normal;
+        }
+        .sum-sign {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
-<div id="ui-layer">
-    <div id="formula-box" class="math-header"></div>
-    <div id="sub-box" class="substitution"></div>
-    
-    <div class="controls-row">
-        <button class="btn-circle" onclick="updateN(-1)">-</button>
-        <div id="n-info">n = <span id="n-val">4</span></div>
-        <button class="btn-circle" onclick="updateN(1)">+</button>
-        <button id="playPauseBtn" class="btn-circle btn-play-pause" onclick="toggleRotation()">⏸</button>
+    <!-- نافذة المعلومات المنبثقة -->
+    <div id="infoPopup" class="info-popup">
+        <div class="info-card" id="infoCard"></div>
     </div>
-    
-    <div class="controls-row">
-        <button class="btn-action" onclick="toggleMode()">تبديل النمط (منفصل/متصل)</button>
+
+    <!-- حاوية القوانين الرياضية -->
+    <div class="law-container">
+        <div class="formula-card">
+            <div class="math-header" id="formula-display">∑_{i=1}^{n} i² = n(n+1)(2n+1)/6</div>
+            <div class="substitution" id="value-display">المجموع: 30</div>
+        </div>
     </div>
-</div>
 
-<script>
-    let n = 4;
-    let discreteMode = false;
-    let isRotating = true;
-    let scene, camera, renderer, controls, mainGroup;
+    <!-- شريط الأزرار السفلي -->
+    <div class="action-bar">
+        <button class="btn-circle" id="btn-minus">−</button>
+        <div id="n-info"><span>𝒏 =</span><span id="n-val">4</span></div>
+        <button class="btn-circle" id="btn-plus">+</button>
+        <button id="toggleModeBtn" class="btn-circle btn-icon">🔄</button>
+    </div>
 
-    init();
-    animate();
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-    function init() {
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(25, 25, 25);
+        // --- إعداد المشهد (المحور Z رأسي) ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x020408);
+        scene.fog = new THREE.FogExp2(0x020408, 0.007);
 
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.2, 100);
+        camera.position.set(12, 8, 14);
+        camera.lookAt(5, 5, 5);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
-        controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.target.set(0, 7, 0);
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.left = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
 
-        mainGroup = new THREE.Group();
+        // تدوير المجموعة الرئيسية لجعل Z للأعلى
+        const mainGroup = new THREE.Group();
+        mainGroup.rotation.x = -Math.PI / 2;
         scene.add(mainGroup);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-        const pLight = new THREE.PointLight(0xffffff, 1);
-        pLight.position.set(30, 40, 30);
-        scene.add(pLight);
+        // إضاءة
+        const ambient = new THREE.AmbientLight(0x404060);
+        scene.add(ambient);
+        const mainLight = new THREE.DirectionalLight(0xfff5e0, 1.2);
+        mainLight.position.set(6, 10, 5);
+        mainLight.castShadow = true;
+        scene.add(mainLight);
+        const fillLight = new THREE.PointLight(0x4488ff, 0.45);
+        fillLight.position.set(-3, 6, 7);
+        scene.add(fillLight);
+        const warmBack = new THREE.PointLight(0xffaa66, 0.4);
+        warmBack.position.set(4, 5, -6);
+        scene.add(warmBack);
+        
+        const gridHelper = new THREE.GridHelper(26, 20, 0x88bbff, 0x446688);
+        gridHelper.position.y = -0.5;
+        gridHelper.material.transparent = true;
+        gridHelper.material.opacity = 0.25;
+        scene.add(gridHelper);
 
-        draw();
-    }
+        // متغيرات الحالة
+        let n = 4;
+        let discreteMode = true;   // true = هرم المربعات, false = رباعي الأوجه
+        
+        // عناصر DOM
+        const nValSpan = document.getElementById('n-val');
+        const formulaDisplay = document.getElementById('formula-display');
+        const valueDisplaySpan = document.getElementById('value-display');
+        const minusBtn = document.getElementById('btn-minus');
+        const plusBtn = document.getElementById('btn-plus');
+        const toggleModeBtn = document.getElementById('toggleModeBtn');
+        const infoPopup = document.getElementById('infoPopup');
+        const infoCard = document.getElementById('infoCard');
 
-    function createLabel(text, x, y, z, color, size = 45) {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = 256; canvas.height = 128;
-        ctx.fillStyle = color;
-        ctx.font = `bold ${size}px Arial`;
-        ctx.textAlign = 'center';
-        ctx.fillText(text, 128, 80);
-        const tex = new THREE.CanvasTexture(canvas);
-        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex }));
-        sprite.position.set(x, y, z);
-        sprite.scale.set(4, 2, 1);
-        return sprite;
-    }
+        // حساب مجموع المربعات
+        const computeSum = (val) => (val * (val + 1) * (2 * val + 1)) / 6;
 
-    function draw() {
-        mainGroup.clear();
-        const res = (n * (n + 1) * (2 * n + 1)) / 6;
+        // --- دالة لإظهار المعلومات المؤقتة ---
+        let hideTimeout = null;
+        function showVertexInfo(name, coords, distance) {
+            const coordStr = `(${coords.x}, ${coords.y}, ${coords.z})`;
+            const colorMap = { 'O': '#ccccdd', 'A': '#ffaaaa', 'B': '#aaffaa', 'C': '#88aaff' };
+            const borderColor = colorMap[name] || '#ffffff';
+            infoCard.style.borderLeftColor = borderColor;
+            infoCard.innerHTML = `<span style="color:${borderColor};">⚫ ${name}</span> &nbsp; إحداثيات: ${coordStr} &nbsp; | &nbsp; البعد عن O: <span style="color:#ffdd99;">${distance.toFixed(3)}</span> وحدة`;
+            infoPopup.style.opacity = '1';
+            if (hideTimeout) clearTimeout(hideTimeout);
+            hideTimeout = setTimeout(() => {
+                infoPopup.style.opacity = '0';
+            }, 3200);
+        }
 
-        if (discreteMode) {
-            document.getElementById('formula-box').innerHTML = "&sum; i&sup2; = 1&sup2; + 2&sup2; + ... + n&sup2;";
-            document.getElementById('sub-box').innerHTML = `Value = ${res}`;
+        // --- بناء النمط المنفصل: هرم المربعات ---
+        function buildDiscretePyramid(group, currentN) {
+            const totalSum = computeSum(currentN);
+            // صيغة رياضية صحيحة من اليسار لليمين
+            formulaDisplay.innerHTML = `∑_{i=1}^{${currentN}} i² = ${currentN}·(${currentN+1})·(${2*currentN+1})/6`;
+            valueDisplaySpan.innerHTML = `المجموع = ${totalSum}`;
             
-            for (let i = 1; i <= n; i++) {
-                const boxGeo = new THREE.BoxGeometry(i, i, 1); // القاعدة على xy والارتفاع سمك الوحدة
-                const cube = new THREE.Mesh(boxGeo, new THREE.MeshPhongMaterial({ color: new THREE.Color().setHSL(0.55, 0.7, 0.2 + (i/n)*0.5) }));
-                cube.position.z = (n - i) + 0.5; // الرص على محور z
-                cube.add(createLabel(`${i*i}`, 0, -i/2 - 0.5, 0, "#ffffff"));
-                cube.add(new THREE.LineSegments(new THREE.EdgesGeometry(boxGeo), new THREE.LineBasicMaterial({color: 0xffffff, opacity: 0.3, transparent: true})));
-                mainGroup.add(cube);
+            const thickness = 1.0;
+            const verticalGap = 0.05;
+            const stepZ = thickness + verticalGap;
+            const centerX = currentN / 2.0;
+            const centerY = currentN / 2.0;
+            
+            for (let i = 1; i <= currentN; i++) {
+                const size = i;
+                const zBottom = (currentN - i) * stepZ;
+                const zCenter = zBottom + thickness / 2;
+                const hue = 0.55 + (i / currentN) * 0.25;
+                const material = new THREE.MeshStandardMaterial({
+                    color: new THREE.Color().setHSL(hue, 0.85, 0.45),
+                    roughness: 0.28,
+                    metalness: 0.3,
+                    emissiveIntensity: 0.15
+                });
+                const boxGeo = new THREE.BoxGeometry(size, size, thickness);
+                const cube = new THREE.Mesh(boxGeo, material);
+                cube.castShadow = true;
+                cube.position.set(centerX, centerY, zCenter);
+                const edgesGeo = new THREE.EdgesGeometry(boxGeo);
+                const wire = new THREE.LineSegments(edgesGeo, new THREE.LineBasicMaterial({ color: 0xe0e8ff }));
+                cube.add(wire);
+                group.add(cube);
+                
+                // نصوص المربعات
+                const labelOffsetZ = thickness / 2 + 0.35;
+                const labelPos = new THREE.Vector3(centerX, centerY, zCenter + labelOffsetZ);
+                const div = document.createElement('div');
+                div.textContent = `${i}² = ${i*i}`;
+                div.style.color = '#ffdd99';
+                div.style.fontSize = '0.85rem';
+                div.style.fontWeight = 'bold';
+                div.style.fontFamily = 'STIX, "Times New Roman", monospace';
+                div.style.background = 'rgba(10, 20, 32, 0.55)';
+                div.style.padding = '2px 10px';
+                div.style.borderRadius = '28px';
+                div.style.border = '1px solid #ffdd99';
+                div.style.backdropFilter = 'blur(4px)';
+                const label = new CSS2DObject(div);
+                label.position.copy(labelPos);
+                group.add(label);
             }
-        } else {
-            // الرؤية المطلوبة: z هو الرأسي (الارتفاع)
-            document.getElementById('formula-box').innerHTML = "V = &frac16; |x<sub>A</sub>| . |y<sub>B</sub>| . |z<sub>C</sub>|";
-            document.getElementById('sub-box').innerHTML = `V = &frac16; |${n}| . |${n+1}| . |${2*n+1}| = ${res}`;
-
-            const axisMax = Math.max(n, 2*n+1) + 5;
-            const addAxis = (vec, col) => {
-                const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), vec]);
-                mainGroup.add(new THREE.Line(g, new THREE.LineBasicMaterial({color: col})));
-            };
-            // في Three.js المحور الرأسي هو Y افتراضياً، سنقوم ببرمجة المشهد ليكون Z هو الرأسي بصرياً
-            addAxis(new THREE.Vector3(axisMax, 0, 0), 0xff4444); // x
-            addAxis(new THREE.Vector3(0, axisMax, 0), 0x4444ff); // y
-            addAxis(new THREE.Vector3(0, 0, axisMax), 0x44ff44); // z الأساسي (الرأسي)
-
-            // الإحداثيات: A(n,0,0), B(0,n+1,0), C(0,0,2n+1)
-            const geo = new THREE.BufferGeometry();
-            const vertices = new Float32Array([
-                0,0,0,  n,0,0,  0,n+1,0,         // القاعدة xy
-                0,0,0,  0,n+1,0,  0,0,2*n+1,     // الوجه yz
-                0,0,0,  0,0,2*n+1,  n,0,0,       // الوجه xz
-                n,0,0,  0,n+1,0,  0,0,2*n+1      // الوجه ABC
-            ]);
-            geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-            geo.computeVertexNormals();
-            const mesh = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({color: 0x00d4ff, transparent: true, opacity: 0.5, side: THREE.DoubleSide}));
-            mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({color: 0x00d4ff})));
-            mainGroup.add(mesh);
-
-            // تسمية النقاط
-            mainGroup.add(createLabel(`A(${n},0,0)`, n, 0, 0, "#ff4444"));
-            mainGroup.add(createLabel(`B(0,${n+1},0)`, 0, n+1, 0, "#4444ff"));
-            mainGroup.add(createLabel(`C(0,0,${2*n+1})`, 0, 0, 2*n+1, "#44ff44"));
-            mainGroup.add(createLabel(`O(0,0,0)`, -1, -1, 0, "#ffffff", 30));
+            // نقطة مرجعية صامتة
+            const originDiv = document.createElement('div');
+            originDiv.textContent = 'O (0,0,0)';
+            originDiv.style.color = '#aaa';
+            originDiv.style.fontSize = '0.7rem';
+            originDiv.style.background = 'rgba(0,0,0,0.5)';
+            originDiv.style.padding = '2px 8px';
+            originDiv.style.borderRadius = '20px';
+            const originLabel = new CSS2DObject(originDiv);
+            originLabel.position.set(0.2, 0.2, -0.3);
+            group.add(originLabel);
         }
-        document.getElementById('n-val').innerText = n;
-    }
 
-    function updateN(v) { n = Math.max(1, Math.min(12, n + v)); draw(); }
-    function toggleMode() { discreteMode = !discreteMode; draw(); }
-    
-    function toggleRotation() {
-        isRotating = !isRotating;
-        document.getElementById('playPauseBtn').innerText = isRotating ? "⏸" : "▶️";
-    }
-
-    function animate() {
-        requestAnimationFrame(animate);
-        if (isRotating) {
-            mainGroup.rotation.z += 0.005; // الدوران حول المحور الرأسي z
+        // --- بناء رباعي الأوجه مع كرات تفاعلية وصيغة رياضية صحيحة ---
+        function buildContinuousTetra(group, currentN) {
+            const O = new THREE.Vector3(0, 0, 0);
+            const A = new THREE.Vector3(currentN, 0, 0);
+            const B = new THREE.Vector3(0, currentN + 1, 0);
+            const C = new THREE.Vector3(0, 0, 2 * currentN + 1);
+            const volume = computeSum(currentN);
+            
+            // صيغة الحجم بشكلها الرياضي الأصيل (من اليسار إلى اليمين)
+            formulaDisplay.innerHTML = `V = ⅙ · ${currentN} · ${currentN+1} · (${2*currentN+1}) = ${volume}`;
+            valueDisplaySpan.innerHTML = `المجموع / الحجم = ${volume}`;
+            
+            // بناء رباعي السطوح
+            const vertices = [O.x,O.y,O.z, A.x,A.y,A.z, B.x,B.y,B.z, C.x,C.y,C.z];
+            const indices = [0,1,2, 0,2,3, 0,3,1, 1,2,3];
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
+            geometry.setIndex(indices);
+            geometry.computeVertexNormals();
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x4aaaff, side: THREE.DoubleSide, transparent: true, opacity: 0.45,
+                emissive: 0x004466, shininess: 65
+            });
+            const tetra = new THREE.Mesh(geometry, material);
+            tetra.castShadow = true;
+            const edgesGeo = new THREE.EdgesGeometry(geometry);
+            const wireframe = new THREE.LineSegments(edgesGeo, new THREE.LineBasicMaterial({ color: 0x88ccff }));
+            tetra.add(wireframe);
+            group.add(tetra);
+            
+            // إضافة كرات ملونة لكل رأس (بدون نصوص CSS2D إضافية)
+            const points = [
+                { vec: O, name: 'O', color: '#ccccdd', distance: 0 },
+                { vec: A, name: 'A', color: '#ffaaaa', distance: currentN },
+                { vec: B, name: 'B', color: '#aaffaa', distance: currentN + 1 },
+                { vec: C, name: 'C', color: '#88aaff', distance: 2 * currentN + 1 }
+            ];
+            
+            points.forEach(p => {
+                const sphereMat = new THREE.MeshStandardMaterial({ color: p.color, emissive: 0x331100, roughness: 0.25, metalness: 0.3 });
+                const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.32, 32, 32), sphereMat);
+                sphere.position.copy(p.vec);
+                sphere.userData = {
+                    type: 'vertex',
+                    name: p.name,
+                    coords: { x: p.vec.x, y: p.vec.y, z: p.vec.z },
+                    distance: p.distance,
+                };
+                group.add(sphere);
+            });
+            
+            // خطوط الحواف
+            const lineMat = new THREE.LineBasicMaterial({ color: 0x55ccff });
+            const edgesList = [[O,A], [O,B], [O,C], [A,B], [B,C], [C,A]];
+            edgesList.forEach(edge => {
+                const geoLine = new THREE.BufferGeometry().setFromPoints([edge[0], edge[1]]);
+                const lineObj = new THREE.Line(geoLine, lineMat);
+                group.add(lineObj);
+            });
         }
-        controls.update();
-        renderer.render(scene, camera);
-    }
 
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-</script>
+        // --- تحديث المشهد بالكامل ---
+        function refreshScene() {
+            while(mainGroup.children.length) mainGroup.remove(mainGroup.children[0]);
+            
+            if (discreteMode) {
+                buildDiscretePyramid(mainGroup, n);
+                // إخفاء نافذة المعلومات إذا كانت ظاهرة
+                infoPopup.style.opacity = '0';
+                if (hideTimeout) clearTimeout(hideTimeout);
+            } else {
+                buildContinuousTetra(mainGroup, n);
+            }
+            nValSpan.innerText = n;
+        }
+
+        // --- التفاعل: راي كاستر للكشف عن النقر على الكرات (الرؤوس) ---
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        
+        function onMouseClick(event) {
+            if (discreteMode) return; // التفاعل فقط في النمط المتصل (رباعي الأوجه)
+            
+            mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+            mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            const spheres = [];
+            mainGroup.children.forEach(child => {
+                if (child.isMesh && child.userData && child.userData.type === 'vertex') {
+                    spheres.push(child);
+                }
+            });
+            const intersects = raycaster.intersectObjects(spheres);
+            if (intersects.length > 0) {
+                const hit = intersects[0].object;
+                const data = hit.userData;
+                if (data) {
+                    showVertexInfo(data.name, data.coords, data.distance);
+                }
+            }
+        }
+
+        // --- التحكم بالأزرار ---
+        function updateN(delta) {
+            let newVal = n + delta;
+            if (newVal >= 1 && newVal <= 12) {
+                n = newVal;
+                refreshScene();
+            } else {
+                const btn = delta > 0 ? plusBtn : minusBtn;
+                btn.style.transform = 'scale(0.92)';
+                setTimeout(() => { btn.style.transform = ''; }, 120);
+            }
+        }
+        function toggleVisualMode() {
+            discreteMode = !discreteMode;
+            refreshScene();
+            toggleModeBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => { toggleModeBtn.style.transform = ''; }, 150);
+        }
+        
+        minusBtn.addEventListener('click', () => updateN(-1));
+        plusBtn.addEventListener('click', () => updateN(1));
+        toggleModeBtn.addEventListener('click', toggleVisualMode);
+        window.addEventListener('click', onMouseClick, false);
+        
+        // --- خلفية نجوم ---
+        (function addStarfield() {
+            const starGeo = new THREE.BufferGeometry();
+            const starCount = 1400;
+            const starPos = new Float32Array(starCount * 3);
+            for (let i = 0; i < starCount; i++) {
+                starPos[i*3] = (Math.random() - 0.5) * 240;
+                starPos[i*3+1] = (Math.random() - 0.5) * 120;
+                starPos[i*3+2] = (Math.random() - 0.5) * 130 - 60;
+            }
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+            const starMat = new THREE.PointsMaterial({ color: 0xaaccff, size: 0.12, transparent: true, opacity: 0.45 });
+            const stars = new THREE.Points(starGeo, starMat);
+            scene.add(stars);
+        })();
+        
+        // الضوابط
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+        controls.autoRotate = false;
+        controls.enableZoom = true;
+        controls.zoomSpeed = 1.2;
+        controls.rotateSpeed = 1.0;
+        controls.target.set(4, 4, 4);
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+        refreshScene();
+        animate();
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
 </body>
 </html>
