@@ -30,41 +30,41 @@
             padding: 10px 20px;
             border-radius: 15px;
             border: 1px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
         }
-        #math-formula-block { font-size: 0.9rem; color: #f5e6b0; min-height: 40px; }
+        #math-formula-block { font-size: 0.85rem; color: #f5e6b0; min-height: 40px; }
         
-        /* حاوية الرسم */
         .canvas-container {
             flex: 1; position: relative; 
-            margin: 0 15px; /* الهامش الجانبي الموحد */
+            margin: 0 15px;
             border-radius: 25px; overflow: hidden;
             background: radial-gradient(circle at center, #0a111f 0%, #02050a 100%);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         #canvas3d { width: 100%; height: 100%; display: block; }
         
-        /* حاوية الأزرار - تلتزم بنفس عرض حاوية الرسم */
         .footer-bar {
             flex-shrink: 0;
-            width: calc(100% - 30px); /* 100% ناقص الهوامش الجانبية (15+15) */
-            margin: 15px auto 35px auto; /* توسيط الحاوية ورفعها عن الحافة السفلية */
+            width: calc(100% - 30px);
+            margin: 15px auto 35px auto;
             z-index: 100;
         }
         .controls {
             display: flex; 
-            gap: 12px; 
-            justify-content: space-between; /* توزيع الأزرار على كامل العرض المتاح */
+            gap: 10px; 
+            justify-content: space-between;
             align-items: center;
-            background: rgba(8, 13, 26, 0.8);
-            padding: 12px 15px;
+            background: rgba(8, 13, 26, 0.85);
+            padding: 10px 12px;
             border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
         }
         button {
             background: #162235; border: 1px solid #2c3e50; color: #ffd700;
             border-radius: 14px; 
-            flex: 1; /* جعل الأزرار تتوزع بالتساوي */
-            max-width: 55px; height: 50px; /* تصغير الحجم */
+            flex: 1;
+            max-width: 52px; height: 48px;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; transition: transform 0.2s;
         }
@@ -72,12 +72,12 @@
         .btn-action { 
             background: linear-gradient(135deg, #ffd700, #daa520); 
             color: #000; border: none; 
-            max-width: 70px; /* زر الأكشن أكبر قليلاً */
+            max-width: 65px;
         }
-        .n-value { color: #fff; font-size: 1.2rem; flex: 1; text-align: center; font-weight: 900; }
+        .n-value { color: #fff; font-size: 1.1rem; flex: 1; text-align: center; font-weight: 900; }
         .watermark { 
             position: absolute; bottom: 15px; left: 20px; 
-            color: rgba(255, 215, 0, 0.3); font-size: 0.7rem; 
+            color: rgba(255, 215, 0, 0.3); font-size: 0.65rem; 
             pointer-events: none;
         }
     </style>
@@ -126,6 +126,7 @@
         
         let scene, camera, renderer, controls, mainGroup;
         let n = 4, allCubes = [], isAnimating = false, isDistributed = false;
+        const STEP = 1.0;
 
         function updateMathFormula() {
             const sumN = (n * (n + 1)) / 2;
@@ -173,6 +174,7 @@
                 let offset = (i * (i - 1)) / 2;
                 const hue = (i * 137.5) % 360; 
                 
+                // حجز خلايا القاعدة للبرج i (Cumulative)
                 for (let x = 0; x < i; x++) {
                     for (let z = 0; z < i; z++) {
                         globalUsed[offset + x][offset + z] = true;
@@ -193,7 +195,7 @@
                             const px = offset + x, py = y, pz = offset + z;
                             let tx = px, tz = pz;
 
-                            if (y > 0) {
+                            if (y > 0) { // البحث عن أماكن فارغة لهذا البرج حصراً داخل المساحة المتاحة له
                                 let found = false;
                                 for(let rz=0; rz < totalS && !found; rz++) {
                                     for(let rx=0; rx < totalS && !found; rx++) {
@@ -213,7 +215,8 @@
                 }
             }
             updateMathFormula();
-            controls.target.set(totalS/2, 0, totalS/2);
+            const S = (n * (n + 1)) / 2;
+            controls.target.set(S/2, 0, S/2);
         }
 
         async function toggleAction() {
@@ -225,23 +228,25 @@
             }
 
             if (!isDistributed) {
+                // توزيع تراكمي بطيء وأنيق
                 for (let tId = 1; tId <= n; tId++) {
                     const tower = allCubes.filter(c => c.userData.towerId === tId);
                     tower.forEach(c => {
                         gsap.to(c.position, { 
                             x: c.userData.target.x, y: c.userData.target.y, z: c.userData.target.z, 
-                            duration: 1.5, 
+                            duration: 1.6, 
                             ease: "power2.inOut" 
                         });
                     });
-                    await new Promise(r => setTimeout(r, 600)); 
+                    await new Promise(r => setTimeout(r, 650)); 
                 }
                 isDistributed = true;
             } else {
+                // تجميع أنيق للأبراج
                 allCubes.forEach(c => {
                     gsap.to(c.position, { 
                         x: c.userData.orig.x, y: c.userData.orig.y, z: c.userData.orig.z, 
-                        duration: 1.8, ease: "expo.out", delay: Math.random() * 0.5 
+                        duration: 1.8, ease: "expo.out", delay: Math.random() * 0.4 
                     });
                 });
                 await new Promise(r => setTimeout(r, 2200));
