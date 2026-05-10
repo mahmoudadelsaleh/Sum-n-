@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>متطابقة المكعبات | م. محمود عادل</title>
+    <title>متطابقة المكعبات | Mahmoud Adel Saleh</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#02050a">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -16,58 +17,61 @@
         * { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; }
         body {
             background: #02050a;
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: system-ui, sans-serif;
             height: 100vh; width: 100vw;
             display: flex; flex-direction: column;
             overflow: hidden; color: white;
         }
-        #offline-status {
-            position: fixed; top: 0; width: 100%;
-            background: #ffd700; color: #000;
-            text-align: center; font-size: 0.8rem; font-weight: bold;
-            padding: 4px; display: none; z-index: 9999;
-        }
-        .header { flex-shrink: 0; padding: 10px; text-align: center; z-index: 10; }
+        .header { flex-shrink: 0; padding: 15px 10px; text-align: center; z-index: 10; }
         .math-panel {
             background: rgba(10, 20, 35, 0.95);
             backdrop-filter: blur(15px);
             display: inline-block;
-            padding: 12px 20px;
-            border-radius: 18px;
+            padding: 15px 25px;
+            border-radius: 20px;
             border: 1px solid rgba(255, 215, 0, 0.4);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
         }
-        #math-formula-block { font-size: 0.9rem; color: #f5e6b0; min-height: 40px; }
+        #math-formula-block { font-size: 1rem; color: #f5e6b0; min-height: 45px; }
         .canvas-container {
             flex: 1; position: relative; margin: 0 10px;
-            border-radius: 25px; overflow: hidden;
+            border-radius: 30px; overflow: hidden;
             background: radial-gradient(circle at center, #0a111f 0%, #02050a 100%);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
         #canvas3d { width: 100%; height: 100%; display: block; }
+        
+        /* رفع وتنسيق منطقة الأزرار */
         .footer-bar {
-            flex-shrink: 0; background: #080d1a;
-            border-top: 1px solid #1a253a; z-index: 100;
-            padding-bottom: env(safe-area-inset-bottom, 35px); /* رفع إضافي للموبايل */
+            flex-shrink: 0;
+            background: linear-gradient(to top, #02050a, #080d1a);
+            z-index: 100;
+            padding: 25px 10px 45px 10px; /* زيادة التباعد السفلي لرفع الأزرار */
         }
         .controls {
-            display: flex; gap: 15px; justify-content: center; align-items: center; padding: 20px 10px;
+            display: flex; gap: 20px; justify-content: center; align-items: center;
         }
         button {
             background: #162235; border: 1px solid #2c3e50; color: #ffd700;
-            border-radius: 15px; min-width: 55px; height: 55px;
+            border-radius: 18px; min-width: 60px; height: 60px;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        button:active { transform: scale(0.9); background: #1c2d45; }
-        .btn-action { background: linear-gradient(135deg, #ffd700, #daa520); color: #000; border: none; min-width: 70px; }
-        .n-value { color: #fff; font-size: 1.2rem; min-width: 60px; text-align: center; font-weight: 900; }
-        .watermark { position: absolute; bottom: 15px; left: 20px; color: rgba(255, 215, 0, 0.3); font-size: 0.7rem; pointer-events: none; }
+        button:active { transform: scale(0.85); }
+        .btn-action { 
+            background: linear-gradient(135deg, #ffd700, #daa520); 
+            color: #000; border: none; min-width: 80px; 
+        }
+        .n-value { color: #fff; font-size: 1.4rem; min-width: 70px; text-align: center; font-weight: 900; }
+        .watermark { 
+            position: absolute; bottom: 20px; left: 25px; 
+            color: rgba(255, 215, 0, 0.35); font-size: 0.75rem; 
+            pointer-events: none; letter-spacing: 1px;
+        }
     </style>
 </head>
 <body>
-
-    <div id="offline-status">وضع الأوفلاين نشط</div>
 
     <div class="header">
         <div class="math-panel">
@@ -77,7 +81,7 @@
     
     <div class="canvas-container">
         <canvas id="canvas3d"></canvas>
-        <div class="watermark">E-LEARNING STUDIO | <b>MR. MAHMOUD ADEL</b></div>
+        <div class="watermark">E-LEARNING STUDIO | <b>MAHMOUD ADEL SALEH</b></div>
     </div>
 
     <div class="footer-bar">
@@ -86,12 +90,12 @@
             <div class="n-value" id="n-value">n=4</div>
             <button id="btn-plus">n+</button>
             
-            <button id="distribute-btn" class="btn-action">
-                <svg id="action-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></svg>
+            <button id="distribute-btn" class="btn-action" title="بدء العرض">
+                <svg id="action-icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"></svg>
             </button>
             
-            <button id="reset-view-btn">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            <button id="reset-view-btn" title="توسيط الكاميرا">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
             </button>
         </div>
     </div>
@@ -109,16 +113,8 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         
-        let scene, camera, renderer, controls, mainGroup, gridHelper;
+        let scene, camera, renderer, controls, mainGroup;
         let n = 4, allCubes = [], isAnimating = false, isDistributed = false;
-        const STEP = 1.0;
-
-        // PWA Offline Logic
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
-        }
-        window.addEventListener('offline', () => document.getElementById('offline-status').style.display = 'block');
-        window.addEventListener('online', () => document.getElementById('offline-status').style.display = 'none');
 
         function updateMathFormula() {
             const sumN = (n * (n + 1)) / 2;
@@ -134,13 +130,12 @@
             camera = new THREE.PerspectiveCamera(40, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.toneMapping = THREE.ReinhardToneMapping;
 
             controls = new OrbitControls(camera, canvas);
             controls.enableDamping = true;
-            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-            const sun = new THREE.DirectionalLight(0xffffff, 1);
-            sun.position.set(10, 20, 15);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+            sun.position.set(15, 30, 20);
             scene.add(sun);
 
             mainGroup = new THREE.Group();
@@ -167,7 +162,6 @@
                 let offset = (i * (i - 1)) / 2;
                 const hue = (i * 137.5) % 360; 
                 
-                // حجز القاعدة للبرج i
                 for (let x = 0; x < i; x++) {
                     for (let z = 0; z < i; z++) {
                         globalUsed[offset + x][offset + z] = true;
@@ -180,23 +174,20 @@
                             const cube = new THREE.Mesh(
                                 new THREE.BoxGeometry(0.95, 0.95, 0.95),
                                 new THREE.MeshPhysicalMaterial({ 
-                                    color: new THREE.Color(`hsl(${hue}, 85%, 55%)`), 
-                                    metalness: 0.15, roughness: 0.25, clearcoat: 1 
+                                    color: new THREE.Color(`hsl(${hue}, 80%, 55%)`), 
+                                    metalness: 0.2, roughness: 0.2, clearcoat: 0.5 
                                 })
                             );
                             
-                            const px = (offset + x) * STEP;
-                            const py = y * STEP;
-                            const pz = (offset + z) * STEP;
-                            
+                            const px = offset + x, py = y, pz = offset + z;
                             let tx = px, tz = pz;
+
                             if (y > 0) {
-                                const currentMaxS = (i * (i + 1)) / 2;
                                 let found = false;
-                                for(let rz=0; rz < currentMaxS && !found; rz++) {
-                                    for(let rx=0; rx < currentMaxS && !found; rx++) {
+                                for(let rz=0; rz < totalS && !found; rz++) {
+                                    for(let rx=0; rx < totalS && !found; rx++) {
                                         if(!globalUsed[rx][rz]) {
-                                            globalUsed[rx][rz] = true; tx = rx * STEP; tz = rz * STEP; found = true;
+                                            globalUsed[rx][rz] = true; tx = rx; tz = rz; found = true;
                                         }
                                     }
                                 }
@@ -211,52 +202,55 @@
                 }
             }
             updateMathFormula();
-            updateGrid();
             controls.target.set(totalS/2, 0, totalS/2);
-        }
-
-        function updateGrid() {
-            if (gridHelper) scene.remove(gridHelper);
-            const S = (n * (n + 1)) / 2;
-            gridHelper = new THREE.GridHelper(S * 2, S, 0xffd700, 0x111111);
-            gridHelper.position.set(S/2 - 0.5, -0.52, S/2 - 0.5);
-            gridHelper.material.opacity = 0.15; gridHelper.material.transparent = true;
-            scene.add(gridHelper);
         }
 
         async function toggleAction() {
             if (isAnimating) return;
             isAnimating = true;
-            const btn = document.getElementById('distribute-btn');
-            btn.disabled = true;
+            
+            // تفعيل الشاشة الكاملة عند بدء الحركة
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
 
             if (!isDistributed) {
+                // سرعة توزيع بطيئة ومنتظمة
                 for (let tId = 1; tId <= n; tId++) {
-                    allCubes.filter(c => c.userData.towerId === tId).forEach(c => {
-                        gsap.to(c.position, { x: c.userData.target.x, y: c.userData.target.y, z: c.userData.target.z, duration: 0.9, ease: "power3.inOut" });
+                    const tower = allCubes.filter(c => c.userData.towerId === tId);
+                    tower.forEach(c => {
+                        gsap.to(c.position, { 
+                            x: c.userData.target.x, y: c.userData.target.y, z: c.userData.target.z, 
+                            duration: 1.5, // مدة حركة أبطأ
+                            ease: "power2.inOut" 
+                        });
                     });
-                    await new Promise(r => setTimeout(r, 400));
+                    await new Promise(r => setTimeout(r, 600)); // فاصل زمني أكبر بين الأبراج
                 }
                 isDistributed = true;
             } else {
+                // تجميع بطيء وممتع
                 allCubes.forEach(c => {
-                    gsap.to(c.position, { x: c.userData.orig.x, y: c.userData.orig.y, z: c.userData.orig.z, duration: 1.1, ease: "back.inOut(1.1)", delay: Math.random() * 0.3 });
+                    gsap.to(c.position, { 
+                        x: c.userData.orig.x, y: c.userData.orig.y, z: c.userData.orig.z, 
+                        duration: 1.8, ease: "expo.out", delay: Math.random() * 0.5 
+                    });
                 });
-                await new Promise(r => setTimeout(r, 1500));
+                await new Promise(r => setTimeout(r, 2200));
                 isDistributed = false;
             }
-            updateIcon(); isAnimating = false; btn.disabled = false;
+            updateIcon(); isAnimating = false;
         }
 
         function updateIcon() {
             const icon = document.getElementById('action-icon');
-            icon.innerHTML = isDistributed ? '<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>' : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+            icon.innerHTML = isDistributed ? '<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor"></path>' : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor"></path><circle cx="12" cy="12" r="3" stroke="currentColor"></circle>';
         }
 
         function resetCam() {
             const S = (n * (n + 1)) / 2;
-            gsap.to(camera.position, { x: S*2.6, y: S*2, z: S*2.6, duration: 1.5, ease: "power2.out" });
-            gsap.to(controls.target, { x: S/2, y: 0, z: S/2, duration: 1.5, ease: "power2.out" });
+            gsap.to(camera.position, { x: S*2.5, y: S*2, z: S*2.5, duration: 1.8, ease: "power2.out" });
+            gsap.to(controls.target, { x: S/2, y: 0, z: S/2, duration: 1.8, ease: "power2.out" });
         }
 
         document.getElementById('btn-plus').onclick = () => { if(n<10){ n++; refresh(); } };
@@ -264,7 +258,11 @@
         document.getElementById('distribute-btn').onclick = toggleAction;
         document.getElementById('reset-view-btn').onclick = resetCam;
         function refresh() { document.getElementById('n-value').innerText = `n=${n}`; rebuild(); }
-        window.onresize = () => { const c = document.querySelector('.canvas-container'); renderer.setSize(c.clientWidth, c.clientHeight); camera.aspect = c.clientWidth/c.clientHeight; camera.updateProjectionMatrix(); };
+        window.onresize = () => {
+            const c = document.querySelector('.canvas-container');
+            renderer.setSize(c.clientWidth, c.clientHeight);
+            camera.aspect = c.clientWidth/c.clientHeight; camera.updateProjectionMatrix();
+        };
         initScene();
     </script>
 </body>
