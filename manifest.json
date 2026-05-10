@@ -1,0 +1,22 @@
+{
+  "short_name": "متطابقة المكعبات",
+  "name": "برهان متطابقة المكعبات - م. محمود عادل",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#02050a",
+  "display": "standalone",
+  "scope": "./",
+  "theme_color": "#02050a",
+  "description": "تطبيق تعليمي تفاعلي لبرهان متطابقة مجموع المكعبات هندسياً بصيغة ثلاثية الأبعاد."
+}
