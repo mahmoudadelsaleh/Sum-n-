@@ -1,22 +1,16 @@
-const CACHE_NAME = 'mas-edu-v1';
-const ASSETS = [
-  '/',
-  '/index.html',
-  '/three.module.js',
-  '/gsap.min.js',
-  '/style.css'
+const cacheName = 'mas-math-v1';
+const assets = [
+  './',
+  './index.html',
+  './manifest.json',
+  'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js',
+  'https://unpkg.com/three@0.152.2/build/three.module.js'
 ];
 
-// تثبيت الكاش
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(cacheName).then(cache => cache.addAll(assets)));
 });
 
-// جلب البيانات أوفلاين
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((res) => res || fetch(e.request))
-  );
+self.addEventListener('fetch', e => {
+  e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
 });
