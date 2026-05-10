@@ -8,7 +8,6 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#02050a">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -30,7 +29,6 @@
             padding: 10px 20px;
             border-radius: 15px;
             border: 1px solid rgba(255, 215, 0, 0.3);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
         }
         #math-formula-block { font-size: 0.85rem; color: #f5e6b0; min-height: 40px; }
         
@@ -58,7 +56,6 @@
             padding: 10px 12px;
             border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
         }
         button {
             background: #162235; border: 1px solid #2c3e50; color: #ffd700;
@@ -66,9 +63,8 @@
             flex: 1;
             max-width: 52px; height: 48px;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: transform 0.2s;
+            cursor: pointer;
         }
-        button:active { transform: scale(0.9); }
         .btn-action { 
             background: linear-gradient(135deg, #ffd700, #daa520); 
             color: #000; border: none; 
@@ -100,11 +96,9 @@
             <button id="btn-minus">n-</button>
             <div class="n-value" id="n-value">n=4</div>
             <button id="btn-plus">n+</button>
-            
             <button id="distribute-btn" class="btn-action">
                 <svg id="action-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"></svg>
             </button>
-            
             <button id="reset-view-btn">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
             </button>
@@ -126,13 +120,12 @@
         
         let scene, camera, renderer, controls, mainGroup;
         let n = 4, allCubes = [], isAnimating = false, isDistributed = false;
-        const STEP = 1.0;
 
         function updateMathFormula() {
             const sumN = (n * (n + 1)) / 2;
             const res = Math.pow(sumN, 2);
             const container = document.getElementById('math-formula-block');
-            container.innerHTML = `$$\\small \\sum_{i=1}^{${n}} i^3 = \\left( \\sum_{i=1}^{${n}} i \\right)^2 = ${sumN}^2 = ${res}$$`;
+            container.innerHTML = `$$\\small \\sum_{i=1}^{${n}} i^3 = \\left( \\frac{${n}(${n}+1)}{2} \\right)^2 = ${res}$$`;
             if (window.MathJax) MathJax.typesetPromise([container]);
         }
 
@@ -142,21 +135,17 @@
             camera = new THREE.PerspectiveCamera(40, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
             controls = new OrbitControls(camera, canvas);
             controls.enableDamping = true;
             scene.add(new THREE.AmbientLight(0xffffff, 0.7));
             const sun = new THREE.DirectionalLight(0xffffff, 1.2);
             sun.position.set(15, 30, 20);
             scene.add(sun);
-
             mainGroup = new THREE.Group();
             scene.add(mainGroup);
-
             rebuild();
             resetCam();
             updateIcon();
-            
             renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
         }
 
@@ -167,47 +156,39 @@
             isDistributed = false;
             updateIcon();
 
-            const totalS = (n * (n + 1)) / 2;
-            const globalUsed = Array(totalS).fill().map(() => Array(totalS).fill(false));
+            for (let k = 1; k <= n; k++) {
+                const hue = (k * 137.5) % 360;
+                const prevS = (k * (k - 1)) / 2; // ضلع المربع السابق
+                const towerOffset = prevS;
 
-            for (let i = 1; i <= n; i++) {
-                let offset = (i * (i - 1)) / 2;
-                const hue = (i * 137.5) % 360; 
-                
-                // حجز خلايا القاعدة للبرج i (Cumulative)
-                for (let x = 0; x < i; x++) {
-                    for (let z = 0; z < i; z++) {
-                        globalUsed[offset + x][offset + z] = true;
-                    }
-                }
-
-                for (let x = 0; x < i; x++) {
-                    for (let z = 0; z < i; z++) {
-                        for (let y = 0; y < i; y++) {
+                for (let y = 0; y < k; y++) {
+                    for (let x = 0; x < k; x++) {
+                        for (let z = 0; z < k; z++) {
                             const cube = new THREE.Mesh(
                                 new THREE.BoxGeometry(0.95, 0.95, 0.95),
-                                new THREE.MeshPhysicalMaterial({ 
-                                    color: new THREE.Color(`hsl(${hue}, 80%, 55%)`), 
-                                    metalness: 0.2, roughness: 0.2, clearcoat: 0.5 
-                                })
+                                new THREE.MeshPhysicalMaterial({ color: new THREE.Color(`hsl(${hue}, 80%, 55%)`), metalness: 0.2, roughness: 0.2, clearcoat: 0.5 })
                             );
-                            
-                            const px = offset + x, py = y, pz = offset + z;
-                            let tx = px, tz = pz;
 
-                            if (y > 0) { // البحث عن أماكن فارغة لهذا البرج حصراً داخل المساحة المتاحة له
-                                let found = false;
-                                for(let rz=0; rz < totalS && !found; rz++) {
-                                    for(let rx=0; rx < totalS && !found; rx++) {
-                                        if(!globalUsed[rx][rz]) {
-                                            globalUsed[rx][rz] = true; tx = rx; tz = rz; found = true;
-                                        }
-                                    }
+                            const px = (towerOffset + x), py = y, pz = (towerOffset + z);
+                            
+                            // الحساب الهندسي الصرف لموضع التوزيع (L-Shape)
+                            let tx, tz;
+                            if (y === 0) {
+                                tx = px; tz = pz; // القاعدة تظل مكانها
+                            } else {
+                                // توزيع الطبقات العليا لملء الفراغ حول المربع k-1
+                                // نستخدم y كمعامل لملء الجوانب
+                                if (y % 2 === 1) {
+                                    tx = x;
+                                    tz = prevS + (Math.floor(y/2) * k) + z;
+                                } else {
+                                    tx = prevS + (Math.floor(y/2 - 1) * k) + x;
+                                    tz = z;
                                 }
                             }
 
                             cube.position.set(px, py, pz);
-                            cube.userData = { orig: new THREE.Vector3(px, py, pz), target: new THREE.Vector3(tx, 0, tz), towerId: i };
+                            cube.userData = { orig: new THREE.Vector3(px, py, pz), target: new THREE.Vector3(tx, 0, tz), towerId: k };
                             mainGroup.add(cube);
                             allCubes.push(cube);
                         }
@@ -222,32 +203,19 @@
         async function toggleAction() {
             if (isAnimating) return;
             isAnimating = true;
-            
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(() => {});
-            }
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
 
             if (!isDistributed) {
-                // توزيع تراكمي بطيء وأنيق
                 for (let tId = 1; tId <= n; tId++) {
-                    const tower = allCubes.filter(c => c.userData.towerId === tId);
-                    tower.forEach(c => {
-                        gsap.to(c.position, { 
-                            x: c.userData.target.x, y: c.userData.target.y, z: c.userData.target.z, 
-                            duration: 1.6, 
-                            ease: "power2.inOut" 
-                        });
+                    allCubes.filter(c => c.userData.towerId === tId).forEach(c => {
+                        gsap.to(c.position, { x: c.userData.target.x, y: c.userData.target.y, z: c.userData.target.z, duration: 1.6, ease: "power2.inOut" });
                     });
-                    await new Promise(r => setTimeout(r, 650)); 
+                    await new Promise(r => setTimeout(r, 650));
                 }
                 isDistributed = true;
             } else {
-                // تجميع أنيق للأبراج
                 allCubes.forEach(c => {
-                    gsap.to(c.position, { 
-                        x: c.userData.orig.x, y: c.userData.orig.y, z: c.userData.orig.z, 
-                        duration: 1.8, ease: "expo.out", delay: Math.random() * 0.4 
-                    });
+                    gsap.to(c.position, { x: c.userData.orig.x, y: c.userData.orig.y, z: c.userData.orig.z, duration: 1.8, ease: "expo.out", delay: Math.random() * 0.4 });
                 });
                 await new Promise(r => setTimeout(r, 2200));
                 isDistributed = false;
