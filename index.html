@@ -65,6 +65,7 @@
             display: flex; align-items: center; justify-content: center;
             cursor: pointer;
         }
+        button:active { transform: scale(0.9); }
         .btn-action { 
             background: linear-gradient(135deg, #ffd700, #daa520); 
             color: #000; border: none; 
@@ -96,11 +97,13 @@
             <button id="btn-minus">n-</button>
             <div class="n-value" id="n-value">n=4</div>
             <button id="btn-plus">n+</button>
+            
             <button id="distribute-btn" class="btn-action">
-                <svg id="action-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"></svg>
+                <svg id="action-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></svg>
             </button>
+            
             <button id="reset-view-btn">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
             </button>
         </div>
     </div>
@@ -120,12 +123,13 @@
         
         let scene, camera, renderer, controls, mainGroup;
         let n = 4, allCubes = [], isAnimating = false, isDistributed = false;
+        const STEP = 1.0;
 
         function updateMathFormula() {
             const sumN = (n * (n + 1)) / 2;
             const res = Math.pow(sumN, 2);
             const container = document.getElementById('math-formula-block');
-            container.innerHTML = `$$\\small \\sum_{i=1}^{${n}} i^3 = \\left( \\frac{${n}(${n}+1)}{2} \\right)^2 = ${res}$$`;
+            container.innerHTML = `$$\\small \\sum_{i=1}^{${n}} i^3 = \\left( \\sum_{i=1}^{${n}} i \\right)^2 = ${sumN}^2 = ${res}$$`;
             if (window.MathJax) MathJax.typesetPromise([container]);
         }
 
@@ -135,20 +139,25 @@
             camera = new THREE.PerspectiveCamera(40, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
             controls = new OrbitControls(camera, canvas);
             controls.enableDamping = true;
-            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
             const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-            sun.position.set(15, 30, 20);
+            sun.position.set(10, 20, 15);
             scene.add(sun);
+
             mainGroup = new THREE.Group();
             scene.add(mainGroup);
+
             rebuild();
             resetCam();
             updateIcon();
+            
             renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
         }
 
+        // الخوارزمية المثالية: حجز القاعدة للبرج i ثم البحث عن الفراغ للطبقات العلوية
         function rebuild() {
             if (isAnimating) return;
             while(mainGroup.children.length) mainGroup.remove(mainGroup.children[0]);
@@ -156,39 +165,54 @@
             isDistributed = false;
             updateIcon();
 
-            for (let k = 1; k <= n; k++) {
-                const hue = (k * 137.5) % 360;
-                const prevS = (k * (k - 1)) / 2; // ضلع المربع السابق
-                const towerOffset = prevS;
+            const totalS = (n * (n + 1)) / 2;
+            const globalUsed = Array(totalS).fill().map(() => Array(totalS).fill(false));
 
-                for (let y = 0; y < k; y++) {
-                    for (let x = 0; x < k; x++) {
-                        for (let z = 0; z < k; z++) {
+            for (let i = 1; i <= n; i++) {
+                let offset = (i * (i - 1)) / 2;
+                const hue = (i * 137.5) % 360; 
+                
+                // حجز القاعدة للبرج i أولاً لضمان المنطق الرياضي
+                for (let x = 0; x < i; x++) {
+                    for (let z = 0; z < i; z++) {
+                        globalUsed[offset + x][offset + z] = true;
+                    }
+                }
+
+                for (let x = 0; x < i; x++) {
+                    for (let z = 0; z < i; z++) {
+                        for (let y = 0; y < i; y++) {
                             const cube = new THREE.Mesh(
                                 new THREE.BoxGeometry(0.95, 0.95, 0.95),
-                                new THREE.MeshPhysicalMaterial({ color: new THREE.Color(`hsl(${hue}, 80%, 55%)`), metalness: 0.2, roughness: 0.2, clearcoat: 0.5 })
+                                new THREE.MeshPhysicalMaterial({ 
+                                    color: new THREE.Color(`hsl(${hue}, 85%, 55%)`), 
+                                    metalness: 0.15, roughness: 0.25, clearcoat: 1 
+                                })
                             );
-
-                            const px = (towerOffset + x), py = y, pz = (towerOffset + z);
                             
-                            // الحساب الهندسي الصرف لموضع التوزيع (L-Shape)
-                            let tx, tz;
-                            if (y === 0) {
-                                tx = px; tz = pz; // القاعدة تظل مكانها
-                            } else {
-                                // توزيع الطبقات العليا لملء الفراغ حول المربع k-1
-                                // نستخدم y كمعامل لملء الجوانب
-                                if (y % 2 === 1) {
-                                    tx = x;
-                                    tz = prevS + (Math.floor(y/2) * k) + z;
-                                } else {
-                                    tx = prevS + (Math.floor(y/2 - 1) * k) + x;
-                                    tz = z;
+                            const px = (offset + x) * STEP;
+                            const py = y * STEP;
+                            const pz = (offset + z) * STEP;
+                            
+                            let tx = px, tz = pz;
+                            if (y > 0) {
+                                // البحث عن الفراغ التالي المتاح تراكمياً
+                                const currentMaxS = (i * (i + 1)) / 2;
+                                let found = false;
+                                for(let rz=0; rz < currentMaxS && !found; rz++) {
+                                    for(let rx=0; rx < currentMaxS && !found; rx++) {
+                                        if(!globalUsed[rx][rz]) {
+                                            globalUsed[rx][rz] = true; 
+                                            tx = rx * STEP; 
+                                            tz = rz * STEP; 
+                                            found = true;
+                                        }
+                                    }
                                 }
                             }
 
                             cube.position.set(px, py, pz);
-                            cube.userData = { orig: new THREE.Vector3(px, py, pz), target: new THREE.Vector3(tx, 0, tz), towerId: k };
+                            cube.userData = { orig: new THREE.Vector3(px, py, pz), target: new THREE.Vector3(tx, 0, tz), towerId: i };
                             mainGroup.add(cube);
                             allCubes.push(cube);
                         }
@@ -203,42 +227,63 @@
         async function toggleAction() {
             if (isAnimating) return;
             isAnimating = true;
-            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+            
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+
+            const btn = document.getElementById('distribute-btn');
+            btn.disabled = true;
 
             if (!isDistributed) {
+                // سرعة توزيع هادئة وبرج ببرج
                 for (let tId = 1; tId <= n; tId++) {
-                    allCubes.filter(c => c.userData.towerId === tId).forEach(c => {
-                        gsap.to(c.position, { x: c.userData.target.x, y: c.userData.target.y, z: c.userData.target.z, duration: 1.6, ease: "power2.inOut" });
+                    const tower = allCubes.filter(c => c.userData.towerId === tId);
+                    tower.forEach(c => {
+                        gsap.to(c.position, { 
+                            x: c.userData.target.x, y: c.userData.target.y, z: c.userData.target.z, 
+                            duration: 1.5, ease: "power3.inOut" 
+                        });
                     });
-                    await new Promise(r => setTimeout(r, 650));
+                    await new Promise(r => setTimeout(r, 600));
                 }
                 isDistributed = true;
             } else {
                 allCubes.forEach(c => {
-                    gsap.to(c.position, { x: c.userData.orig.x, y: c.userData.orig.y, z: c.userData.orig.z, duration: 1.8, ease: "expo.out", delay: Math.random() * 0.4 });
+                    gsap.to(c.position, { 
+                        x: c.userData.orig.x, y: c.userData.orig.y, z: c.userData.orig.z, 
+                        duration: 1.2, ease: "back.inOut(1.1)", delay: Math.random() * 0.4 
+                    });
                 });
-                await new Promise(r => setTimeout(r, 2200));
+                await new Promise(r => setTimeout(r, 1600));
                 isDistributed = false;
             }
-            updateIcon(); isAnimating = false;
+
+            updateIcon();
+            isAnimating = false;
+            btn.disabled = false;
         }
 
         function updateIcon() {
             const icon = document.getElementById('action-icon');
-            icon.innerHTML = isDistributed ? '<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor"></path>' : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor"></path><circle cx="12" cy="12" r="3" stroke="currentColor"></circle>';
+            icon.innerHTML = isDistributed ? '<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>' : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
         }
 
         function resetCam() {
             const S = (n * (n + 1)) / 2;
-            gsap.to(camera.position, { x: S*2.5, y: S*2, z: S*2.5, duration: 1.8, ease: "power2.out" });
-            gsap.to(controls.target, { x: S/2, y: 0, z: S/2, duration: 1.8, ease: "power2.out" });
+            gsap.to(camera.position, { x: S*2.6, y: S*2, z: S*2.6, duration: 1.5, ease: "power2.out" });
+            gsap.to(controls.target, { x: S/2, y: 0, z: S/2, duration: 1.5, ease: "power2.out" });
         }
 
         document.getElementById('btn-plus').onclick = () => { if(n<10){ n++; refresh(); } };
         document.getElementById('btn-minus').onclick = () => { if(n>1){ n--; refresh(); } };
         document.getElementById('distribute-btn').onclick = toggleAction;
         document.getElementById('reset-view-btn').onclick = resetCam;
-        function refresh() { document.getElementById('n-value').innerText = `n=${n}`; rebuild(); }
+        function refresh() { 
+            document.getElementById('n-value').innerText = `n=${n}`; 
+            rebuild(); 
+            // الحفاظ على نقطة ارتكاز الكاميرا دون تحريكها قسرياً
+        }
         window.onresize = () => {
             const c = document.querySelector('.canvas-container');
             renderer.setSize(c.clientWidth, c.clientHeight);
