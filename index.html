@@ -22,52 +22,63 @@
             display: flex; flex-direction: column;
             overflow: hidden; color: white;
         }
-        .header { flex-shrink: 0; padding: 15px 10px; text-align: center; z-index: 10; }
+        .header { flex-shrink: 0; padding: 10px; text-align: center; z-index: 10; }
         .math-panel {
             background: rgba(10, 20, 35, 0.95);
             backdrop-filter: blur(15px);
             display: inline-block;
-            padding: 15px 25px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 215, 0, 0.4);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
         }
-        #math-formula-block { font-size: 1rem; color: #f5e6b0; min-height: 45px; }
+        #math-formula-block { font-size: 0.9rem; color: #f5e6b0; min-height: 40px; }
+        
+        /* حاوية الرسم */
         .canvas-container {
-            flex: 1; position: relative; margin: 0 10px;
-            border-radius: 30px; overflow: hidden;
+            flex: 1; position: relative; 
+            margin: 0 15px; /* الهامش الجانبي الموحد */
+            border-radius: 25px; overflow: hidden;
             background: radial-gradient(circle at center, #0a111f 0%, #02050a 100%);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         #canvas3d { width: 100%; height: 100%; display: block; }
         
-        /* رفع وتنسيق منطقة الأزرار */
+        /* حاوية الأزرار - تلتزم بنفس عرض حاوية الرسم */
         .footer-bar {
             flex-shrink: 0;
-            background: linear-gradient(to top, #02050a, #080d1a);
+            width: calc(100% - 30px); /* 100% ناقص الهوامش الجانبية (15+15) */
+            margin: 15px auto 35px auto; /* توسيط الحاوية ورفعها عن الحافة السفلية */
             z-index: 100;
-            padding: 25px 10px 45px 10px; /* زيادة التباعد السفلي لرفع الأزرار */
         }
         .controls {
-            display: flex; gap: 20px; justify-content: center; align-items: center;
+            display: flex; 
+            gap: 12px; 
+            justify-content: space-between; /* توزيع الأزرار على كامل العرض المتاح */
+            align-items: center;
+            background: rgba(8, 13, 26, 0.8);
+            padding: 12px 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
         button {
             background: #162235; border: 1px solid #2c3e50; color: #ffd700;
-            border-radius: 18px; min-width: 60px; height: 60px;
+            border-radius: 14px; 
+            flex: 1; /* جعل الأزرار تتوزع بالتساوي */
+            max-width: 55px; height: 50px; /* تصغير الحجم */
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer; transition: transform 0.2s;
         }
-        button:active { transform: scale(0.85); }
+        button:active { transform: scale(0.9); }
         .btn-action { 
             background: linear-gradient(135deg, #ffd700, #daa520); 
-            color: #000; border: none; min-width: 80px; 
+            color: #000; border: none; 
+            max-width: 70px; /* زر الأكشن أكبر قليلاً */
         }
-        .n-value { color: #fff; font-size: 1.4rem; min-width: 70px; text-align: center; font-weight: 900; }
+        .n-value { color: #fff; font-size: 1.2rem; flex: 1; text-align: center; font-weight: 900; }
         .watermark { 
-            position: absolute; bottom: 20px; left: 25px; 
-            color: rgba(255, 215, 0, 0.35); font-size: 0.75rem; 
-            pointer-events: none; letter-spacing: 1px;
+            position: absolute; bottom: 15px; left: 20px; 
+            color: rgba(255, 215, 0, 0.3); font-size: 0.7rem; 
+            pointer-events: none;
         }
     </style>
 </head>
@@ -90,12 +101,12 @@
             <div class="n-value" id="n-value">n=4</div>
             <button id="btn-plus">n+</button>
             
-            <button id="distribute-btn" class="btn-action" title="بدء العرض">
-                <svg id="action-icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"></svg>
+            <button id="distribute-btn" class="btn-action">
+                <svg id="action-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"></svg>
             </button>
             
-            <button id="reset-view-btn" title="توسيط الكاميرا">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            <button id="reset-view-btn">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
             </button>
         </div>
     </div>
@@ -209,27 +220,24 @@
             if (isAnimating) return;
             isAnimating = true;
             
-            // تفعيل الشاشة الكاملة عند بدء الحركة
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(() => {});
             }
 
             if (!isDistributed) {
-                // سرعة توزيع بطيئة ومنتظمة
                 for (let tId = 1; tId <= n; tId++) {
                     const tower = allCubes.filter(c => c.userData.towerId === tId);
                     tower.forEach(c => {
                         gsap.to(c.position, { 
                             x: c.userData.target.x, y: c.userData.target.y, z: c.userData.target.z, 
-                            duration: 1.5, // مدة حركة أبطأ
+                            duration: 1.5, 
                             ease: "power2.inOut" 
                         });
                     });
-                    await new Promise(r => setTimeout(r, 600)); // فاصل زمني أكبر بين الأبراج
+                    await new Promise(r => setTimeout(r, 600)); 
                 }
                 isDistributed = true;
             } else {
-                // تجميع بطيء وممتع
                 allCubes.forEach(c => {
                     gsap.to(c.position, { 
                         x: c.userData.orig.x, y: c.userData.orig.y, z: c.userData.orig.z, 
